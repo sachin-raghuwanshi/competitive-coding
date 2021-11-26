@@ -1,0 +1,123 @@
+/* as it was given in the question that you have to go through shortest path between u and v and that too in logarithmic time complexity.we will go by longest common ancestor method. */ 
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long int ll;
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+#define ordered_set tree<int, null_type,less_equal<int>, rb_tree_tag,tree_order_statistics_node_update>
+vector<vector<int>>v;
+int k=20;
+vector<int>val;
+vector<int>dis;
+int dp[100005][20];
+int vdp[100005][20];
+vector<int>vis;
+void dfs(int i,int par)
+{
+    vis[i]=1;
+    for(int j=0;j<v[i].size();j++)
+    {
+        if(vis[v[i][j]]==0)
+        {
+            dis[v[i][j]]=dis[i]+1;
+            //cout<<v[i][j]<<" "<<dis[v[i][j]]<<endl;
+            dp[v[i][j]][0]=i;
+            vdp[v[i][j]][0]=val[v[i][j]]^val[i];
+            dfs(v[i][j],i);
+        }
+    }
+}
+int lca(int a,int b)
+{
+    int x=val[a];
+    int y=val[b];
+    if(dis[b]<dis[a])
+    {
+        swap(a,b);
+        swap(x,y);
+    }
+    int z=dis[b]-dis[a];
+
+    while(z)
+    {
+        for(int i=0;i<20;i++)
+        {
+            if(z&(1<<i))
+            {
+                z-=(1<<i);
+                y=y^val[b]^vdp[b][i];
+                b=dp[b][i];
+            }
+        }
+    }
+    if(a==b)
+    {
+        return x^y^val[a];
+    }
+    for(int i=19;i>=0;i--)
+    {
+        if(dp[a][i]!=-1&&dp[a][i]!=dp[b][i])
+        {
+            y=y^val[b]^vdp[b][i];
+            b=dp[b][i];
+            x=x^val[a]^vdp[a][i];
+            a=dp[a][i];
+        }
+    }
+    return x^y^val[dp[a][0]];
+
+}
+int main() 
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    ll t=1;
+    cin>>t;
+    while(t--)
+    {
+        ll n,q;
+        cin>>n>>q;
+        v.clear();
+        v.resize(n+1);
+        val.resize(n+1);
+        dis.resize(n+1);
+        vis.clear();
+        vis.resize(n+1);
+        for(int i=0;i<n;i++)
+        {
+            cin>>val[i+1];
+        }
+        for(int i=0;i<n-1;i++)
+        {
+            int a,b;
+            cin>>a>>b;
+            v[a].push_back(b);
+            v[b].push_back(a);
+        }
+        memset(dp,-1,sizeof(dp));
+        memset(vdp,0,sizeof(vdp));
+        dis[1]=0;
+
+        dfs(1,-1);
+        for(int i=1;i<20;i++)
+        {
+            for(int j=1;j<=n;j++)
+            {
+                int x=dp[j][i-1];
+                if(x!=-1)
+                {
+                    dp[j][i]=dp[x][i-1];
+                    vdp[j][i]=vdp[j][i-1]^(vdp[x][i-1])^(val[x]);
+                }
+            }
+        }
+        while(q--)
+        {
+            int a,b;
+            cin>>a>>b;
+            cout<<lca(a,b)<<endl;
+        }
+
+    }
+}
